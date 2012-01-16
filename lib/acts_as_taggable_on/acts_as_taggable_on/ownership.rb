@@ -17,7 +17,7 @@ module ActsAsTaggableOn::Taggable
         super(*args)
       end
       
-      def initialize_acts_as_taggable_on_ownership      
+      def initialize_acts_as_taggable_on_ownership
         tag_types.map(&:to_s).each do |tag_type|
           class_eval %(
             def #{tag_type}_from(owner)
@@ -44,12 +44,15 @@ module ActsAsTaggableOn::Taggable
         cache = instance_variable_get(variable_name) || instance_variable_set(variable_name, {})
       end
       
+      def clear_cached_owned_tag_list_on(context)
+        cache = instance_variable_set("@owned_#{context}_list", {})
+      end
+      
       def owner_tag_list_on(owner, context)
         add_custom_context(context)
 
         cache = cached_owned_tag_list_on(context)
         cache.delete_if { |key, value| key.id == owner.id && key.class == owner.class }
-        
         cache[owner] ||= ActsAsTaggableOn::TagList.new(*owner_tags_on(owner, context).map(&:name))
       end
       
@@ -58,7 +61,6 @@ module ActsAsTaggableOn::Taggable
         
         cache = cached_owned_tag_list_on(context)
         cache.delete_if { |key, value| key.id == owner.id && key.class == owner.class }
-
         cache[owner] = ActsAsTaggableOn::TagList.from(new_list)
       end
       
@@ -69,10 +71,11 @@ module ActsAsTaggableOn::Taggable
       
         super(*args)
       end
-    
+      
       def save_owned_tags
         tagging_contexts.each do |context|
           cached_owned_tag_list_on(context).each do |owner, tag_list|
+            
             # Find existing tags or create non-existing tags:
             tag_list = ActsAsTaggableOn::Tag.find_or_create_all_with_like_by_name(tag_list.uniq)            
 
@@ -94,8 +97,9 @@ module ActsAsTaggableOn::Taggable
               taggings.create!(:tag_id => tag.id, :context => context.to_s, :tagger => owner, :taggable => self)
             end
           end
+          
+          clear_cached_owned_tag_list_on(context)
         end
-        
         true
       end
     end
