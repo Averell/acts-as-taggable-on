@@ -37,7 +37,7 @@ module ActsAsTaggableOn
     ### CLASS METHODS:
 
     def self.find_or_create_with_like_by_name(name)
-      named_like(name).first || create(:name => name)
+      named_like(name).first || create!(:name => name)
     end
 
     def self.find_or_create_all_with_like_by_name(*list)
@@ -51,7 +51,7 @@ module ActsAsTaggableOn
                         name = comparable_name(name)
                         existing_tags.any? { |tag| comparable_name(tag.name) == name }
                       end
-      created_tags  = new_tag_names.map { |name| Tag.create(:name => name) }
+      created_tags  = new_tag_names.map { |name| Tag.create!(:name => name) }
 
       existing_tags + created_tags
     end
