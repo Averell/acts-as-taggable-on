@@ -19,8 +19,17 @@ module ActsAsTaggableOn
 
     validates_uniqueness_of :tag_id, :scope => [ :taggable_type, :taggable_id, :context, :tagger_id, :tagger_type ]
 
+    before_save   :set_taggable_context_crc32
     after_destroy :remove_unused_tags
 
+    def self.taggable_context_crc32(taggable_class, taggable_id, context)
+      Zlib.crc32("#{taggable_class}-#{taggable_id}-#{context}")
+    end
+    
+    def self.taggable_context_crc32?
+      @@has_taggable_context_crc32 ||= column_names.include?("taggable_context_crc32")
+    end
+    
     private
 
     def remove_unused_tags
@@ -29,6 +38,10 @@ module ActsAsTaggableOn
           tag.destroy
         end
       end
+    end
+    
+    def set_taggable_context_crc32
+      write_attribute :taggable_context_crc32, self.class.taggable_context_crc32(taggable_type, taggable_id, context)
     end
   end
 end

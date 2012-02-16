@@ -4,7 +4,7 @@ module ActsAsTaggableOn
 
     cattr_accessor :remove_unused
     self.remove_unused = false
-     
+
     attr_accessible :name
 
     ### ASSOCIATIONS:
@@ -45,6 +45,7 @@ module ActsAsTaggableOn
 
       return [] if list.empty?
 
+      list.uniq!{|tag| comparable_name(tag) }
       existing_tags = Tag.named_any(list).all
       new_tag_names = list.reject do |name|
                         name = comparable_name(name)
